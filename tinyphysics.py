@@ -143,7 +143,8 @@ class TinyPhysicsSimulator:
 
   def control_step(self, step_idx: int) -> None:
     # control the car (towards these targets)
-    # goal is to drive car exactly on trajectory
+    # goal is to drive car exactly on trajectoryß
+    
     action = self.controller.update(self.target_lataccel_history[step_idx], self.current_lataccel, self.state_history[step_idx], future_plan=self.futureplan)
     if step_idx < CONTROL_START_IDX:
       action = self.data['steer_command'].values[step_idx]
