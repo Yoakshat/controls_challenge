@@ -51,7 +51,10 @@ class Controller():
         costs = [c['total_cost'] for c in costs]
         
         # lower the cost, the higher the fitness
-        return -1 * sum(costs)/len(costs)
+        self.fitness = -1 * sum(costs)/len(costs)
+
+        # cost is 100, fitness is -100
+        
 
     # for testing
     def printTree(self):

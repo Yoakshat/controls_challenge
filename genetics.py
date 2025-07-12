@@ -1,7 +1,7 @@
 from controllers.controlTree import Controller
 from random import random, choice, choices
 import copy
-from tinyphysics import TinyPhysicsModel
+import sys
 
 # cross two trees over 
 # pick the parent node for each 
@@ -51,7 +51,10 @@ def naturalSelection(modelPath, dataPath, POP=100, GENERATIONS=1000):
 
     for _ in range(GENERATIONS): 
         totalFitness = sum([p.fitness for p in parents])
-        probs = [p.fitness/totalFitness for p in parents]
+        # # -100/-300 = 0.33, -200/-300 = 0.66
+        # but -100 should actually be more likely
+        # with negatives, 1 -
+        probs = [1 - (p.fitness/totalFitness) for p in parents]
 
         # parents are selected like a roulette wheel (w/replacement)
         # e.g. there could be multiple copies of the same individual
@@ -82,7 +85,7 @@ def naturalSelection(modelPath, dataPath, POP=100, GENERATIONS=1000):
         parents = offspring
 
     # in the end return the best control tree 
-    bestFitness = -100000
+    bestFitness = -1 * sys.maxsize
     bestTree = None
     for p in parents: 
         if(p.fitness > bestFitness): 
@@ -93,7 +96,7 @@ def naturalSelection(modelPath, dataPath, POP=100, GENERATIONS=1000):
 
 
 if __name__ == "__main__":
-    bestTree = naturalSelection(modelPath="models/tinyphysics.onnx", dataPath="data", POP=100, GENERATIONS=3)
+    bestTree = naturalSelection(modelPath="models/tinyphysics.onnx", dataPath="data", POP=5, GENERATIONS=3)
     bestTree.printTree()
 
 
