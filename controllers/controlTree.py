@@ -38,7 +38,7 @@ class Controller():
 
     def rollout(self, modelPath, dataPath): 
         model = TinyPhysicsModel(modelPath, debug=False)
-        sim = TinyPhysicsSimulator(model, dataPath, self)
+        sim = TinyPhysicsSimulator(model, str(dataPath), self)
 
         return sim.rollout()
 
@@ -48,7 +48,10 @@ class Controller():
         
         # parallel speedup
         costs = process_map(rolloutMap, files)
-        return sum(costs)/len(costs)
+        costs = [c['total_cost'] for c in costs]
+        
+        # lower the cost, the higher the fitness
+        return -1 * sum(costs)/len(costs)
 
     # for testing
     def printTree(self):

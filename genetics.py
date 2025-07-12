@@ -92,8 +92,9 @@ def naturalSelection(modelPath, dataPath, POP=100, GENERATIONS=1000):
     return bestTree
 
 
-bestTree = naturalSelection(modelPath="models/tinyphysics.onnx", dataPath="data", POP=100, GENERATIONS=100)
-bestTree.printTree()
+if __name__ == "__main__":
+    bestTree = naturalSelection(modelPath="models/tinyphysics.onnx", dataPath="data", POP=100, GENERATIONS=3)
+    bestTree.printTree()
 
 
 
