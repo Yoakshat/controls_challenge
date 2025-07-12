@@ -2,6 +2,7 @@ from controllers.controlTree import Controller
 from random import random, choice, choices
 import copy
 import sys
+from tqdm import tqdm
 
 # cross two trees over 
 # pick the parent node for each 
@@ -49,8 +50,10 @@ def naturalSelection(modelPath, dataPath, POP=100, GENERATIONS=1000):
         parents.append(tree)
 
 
-    for _ in range(GENERATIONS): 
+    for i in tqdm(range(GENERATIONS)): 
         totalFitness = sum([p.fitness for p in parents])
+        print("Avg Fitness of Generation: ",totalFitness/len(parents))
+
         # # -100/-300 = 0.33, -200/-300 = 0.66
         # but -100 should actually be more likely
         # with negatives, 1 -
@@ -92,12 +95,14 @@ def naturalSelection(modelPath, dataPath, POP=100, GENERATIONS=1000):
             bestFitness = p.fitness 
             bestTree = p 
 
-    return bestTree
+    return bestTree, bestFitness
 
 
 if __name__ == "__main__":
-    bestTree = naturalSelection(modelPath="models/tinyphysics.onnx", dataPath="data", POP=5, GENERATIONS=3)
+    bestTree, bestFitness = naturalSelection(modelPath="models/tinyphysics.onnx", dataPath="data", POP=100, GENERATIONS=20)
     bestTree.printTree()
+    print("Fitness: ", bestFitness)
+
 
 
 

@@ -11,10 +11,13 @@ class Controller():
     def __init__(self, maxDepth=10): 
         self.operators = ["+", "x", "/", "-"]
         # our terminals
-        self.functions = ["roll_lataccel", "v_ego", "a_ego"]
+        self.functions = ["P", "I", "D"]
         self.constants = [1, 2, 3, 4, 5]
         self.terminals = self.functions + self.constants
         self.maxDepth=maxDepth
+
+        self.errorIntegral = 0
+        self.prevError = 0
 
         # choose a random operator
         self.root = Node(choice(self.operators), depth=1)
@@ -42,7 +45,7 @@ class Controller():
 
         return sim.rollout()
 
-    def evalFitness(self, modelPath, dataPath, numRollouts=100): 
+    def evalFitness(self, modelPath, dataPath, numRollouts=10): 
         files = sorted(Path(dataPath).iterdir())[:numRollouts]
         rolloutMap = partial(self.rollout, modelPath)
         
@@ -51,10 +54,8 @@ class Controller():
         costs = [c['total_cost'] for c in costs]
         
         # lower the cost, the higher the fitness
-        self.fitness = -1 * sum(costs)/len(costs)
-
         # cost is 100, fitness is -100
-        
+        self.fitness = -1 * sum(costs)/len(costs)
 
     # for testing
     def printTree(self):
@@ -78,26 +79,29 @@ class Controller():
             return choice(self.terminals)
 
     def createTree(self, root): 
-        if(root.depth + 1 == self.maxDepth): 
-            # then bottom nodes must be terminals 
-            root.right = Node(choice(self.terminals), self.maxDepth)
-            root.left = Node(choice(self.terminals), self.maxDepth)
-
-            return root
-
         # if it is a terminal, don't do anything (base case)
         if(root.me not in self.terminals): 
-            # decide to assign a constant or a terminal to node
-            right = Node(self.generate(), root.depth + 1)
-            left = Node(self.generate(), root.depth + 1)
+            if(root.depth + 1 == self.maxDepth): 
+                # then bottom nodes must be terminals 
+                root.right = Node(choice(self.terminals), self.maxDepth)
+                root.left = Node(choice(self.terminals), self.maxDepth)
+            else: 
+                # decide to assign a constant or a terminal to node with 50% probability each
+                right = Node(self.generate(), root.depth + 1)
+                left = Node(self.generate(), root.depth + 1)
 
-            root.right = self.createTree(right)
-            root.left = self.createTree(left)
+                root.right = self.createTree(right)
+                root.left = self.createTree(left)
 
         return root
     
     def update(self, target_lataccel, current_lataccel, state, future_plan):
-        dicState = {"roll_lataccel": state.roll_lataccel, "v_ego": state.v_ego, "a_ego": state.a_ego}
+        error = (target_lataccel - current_lataccel)
+        self.errorIntegral += error
+        errorDiff = error - self.prevError
+        self.prevError = error
+
+        dicState = {"P": error, "I": self.errorIntegral, "D": errorDiff}
         return self.evaluate(dicState)
 
     # here state is a dictionary
