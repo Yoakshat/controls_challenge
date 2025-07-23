@@ -89,13 +89,14 @@ def naturalSelection(modelPath, dataPath, maxDepth, POP=100, GENERATIONS=1000):
             elif prob < 0.3: 
                 mutate(b)
                 offspring.append(b)
+
             else: 
                 if i < len(breeders) - 1: 
                     # crossover until both r valid
-                    mateWith = choice(breeders[:i] + breeders[i+1:])
+                    # just do next (random anyways)
+                    mateWith = breeders[i+1]
                     numGood = 0
 
-                    # might get 1 extra offspring per crossover
                     while numGood < 2: 
                         crossover(b, mateWith)
                         # get the depth of tree
@@ -105,12 +106,12 @@ def naturalSelection(modelPath, dataPath, maxDepth, POP=100, GENERATIONS=1000):
                         if(mateWith.getDepth() <= mateWith.maxDepth):
                             numGood += 1
                             offspring.append(mateWith)
-                            mated.add(i)
+                            mated.add(i+1)
             
         for o in offspring: 
             o.evalFitness(modelPath, dataPath)
 
-        parents = offspring
+        parents = offspring[:POP]
 
     # in the end return the best control tree 
     bestFitness = -1 * sys.maxsize
