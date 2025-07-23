@@ -21,8 +21,37 @@ class Controller():
 
         # choose a random operator
         self.root = Node(choice(self.operators), depth=1)
-        self.createTree(self.root)
+
+        if maxDepth == 1: 
+            self.root = Node(choice(self.terminals), depth=1)
+        else: 
+            self.createTree(self.root)
+
         self.fitness = 0
+
+    def getDepth(self): 
+        # get the depth of the tree (go until leaf nodes)
+        return self.getDepthRec(self.root)
+    
+    def getDepthRec(self, node):     
+        if node.right is None: 
+            return node.depth
+
+        rightDepth = self.getDepthRec(node.right)
+        leftDepth = self.getDepthRec(node.left)
+
+        return max(rightDepth, leftDepth)
+    
+    # update depth of entire tree
+    def updateDepth(self): 
+        return self.updateDepthRec(self.root, 1)
+    
+    def updateDepthRec(self, node, depth): 
+        if node is not None: 
+            node.depth = depth
+
+            self.updateDepthRec(node.right, depth+1)
+            self.updateDepthRec(node.left, depth+1)    
 
     # select a random parent node
     def selectRandom(self): 
@@ -62,12 +91,13 @@ class Controller():
         print(self.printTreeRec(self.root))
 
     def printTreeRec(self, node):
+        
         if node is None:
             return ""
         
         right_str = self.printTreeRec(node.right)
         left_str = self.printTreeRec(node.left)
-       
+        
         return f"({right_str} {node.me} {left_str})"
 
     def generate(self): 
@@ -137,15 +167,3 @@ class Node():
         self.me = me
         self.depth = depth
 
-'''
-tree = ControlTree()
-tree.selectRandom()
-tree = ControlTree()
-# tree.printTree()
-state = {
-    "root_lataccel": 3, 
-    "v_ego": 2.1, 
-    "a_ego": 1
-}
-print(tree.evaluate(state=state))
-'''

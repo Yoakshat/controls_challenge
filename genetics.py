@@ -25,15 +25,23 @@ def crossover(tree1, tree2):
     setattr(parent1, swap1, copy.deepcopy(getattr(parent2, swap2)))
     setattr(parent2, swap2, temp)
 
+    tree1.updateDepth()
+    tree2.updateDepth()
+
 def mutate(tree): 
     # during mutation, pick a random parent node, and replace right/left with another subtree
+    # make sure doesn't exceed max depth
     randParent = tree.selectRandom()
-    subtree = Controller()
-
+    
     if random() < 0.5: 
+        subtree=Controller(maxDepth=tree.maxDepth - randParent.left.depth + 1)
         randParent.left = subtree.root
     else: 
+        subtree=Controller(maxDepth=tree.maxDepth - randParent.right.depth + 1)
         randParent.right = subtree.root
+
+    # update depth of nodes of trees
+    tree.updateDepth()
 
 
 # start with initial population of trees
@@ -41,18 +49,21 @@ def mutate(tree):
 # crossover, mutate, or replicate to create offspring
 # repeat
 
-def naturalSelection(modelPath, dataPath, POP=100, GENERATIONS=1000):
+def naturalSelection(modelPath, dataPath, maxDepth, POP=100, GENERATIONS=1000):
 
     parents = [] 
     for _ in range(POP): 
-        tree = Controller(maxDepth=10)
+        tree = Controller(maxDepth=maxDepth)
         tree.evalFitness(modelPath, dataPath)
         parents.append(tree)
 
 
     for i in tqdm(range(GENERATIONS)): 
-        totalFitness = sum([p.fitness for p in parents])
-        print("Avg Fitness of Generation: ",totalFitness/len(parents))
+        fit = [p.fitness for p in parents]
+        totalFitness = sum(fit)
+        print("Avg Fitness of Generation: ", totalFitness/len(parents))
+        print("Max Fitness of Generation: ", max(fit))
+
 
         # # -100/-300 = 0.33, -200/-300 = 0.66
         # but -100 should actually be more likely
@@ -65,7 +76,12 @@ def naturalSelection(modelPath, dataPath, POP=100, GENERATIONS=1000):
 
         # generate offspring by crossing over, replicating, or mutating
         offspring = [] 
+        mated = set()
         for i, b in enumerate(breeders):
+            # if already mated, skip
+            if i in mated: 
+                continue
+
             prob = random()
 
             if prob < 0.1: 
@@ -75,12 +91,21 @@ def naturalSelection(modelPath, dataPath, POP=100, GENERATIONS=1000):
                 offspring.append(b)
             else: 
                 if i < len(breeders) - 1: 
+                    # crossover until both r valid
                     mateWith = choice(breeders[:i] + breeders[i+1:])
-                    crossover(b, mateWith)
-                    offspring.append(b)
-                    offspring.append(mateWith)
+                    numGood = 0
 
-                    breeders.remove(mateWith)
+                    # might get 1 extra offspring per crossover
+                    while numGood < 2: 
+                        crossover(b, mateWith)
+                        # get the depth of tree
+                        if(b.getDepth() <= b.maxDepth):
+                            numGood += 1
+                            offspring.append(b)
+                        if(mateWith.getDepth() <= mateWith.maxDepth):
+                            numGood += 1
+                            offspring.append(mateWith)
+                            mated.add(i)
             
         for o in offspring: 
             o.evalFitness(modelPath, dataPath)
@@ -99,10 +124,9 @@ def naturalSelection(modelPath, dataPath, POP=100, GENERATIONS=1000):
 
 
 if __name__ == "__main__":
-    bestTree, bestFitness = naturalSelection(modelPath="models/tinyphysics.onnx", dataPath="data", POP=100, GENERATIONS=20)
+    bestTree, bestFitness = naturalSelection(modelPath="models/tinyphysics.onnx", dataPath="data", maxDepth=5, POP=100, GENERATIONS=30)
     bestTree.printTree()
     print("Fitness: ", bestFitness)
-
 
 
 
